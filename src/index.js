@@ -437,13 +437,13 @@ class Offline {
 
         // Route creation
         const routeMethod = method === 'ANY' ? '*' : method;
-        let routeConfig = {
+        const routeConfig = {
           cors,
           auth: authStrategyName,
         };
 
-        if(routeMethod !== 'HEAD' && routeMethod !== 'GET'){
-          routeConfig.payload = { parse: false }
+        if (routeMethod !== 'HEAD' && routeMethod !== 'GET') {
+          routeConfig.payload = { parse: false };
         }
 
         this.server.route({
@@ -451,7 +451,13 @@ class Offline {
           path: fullPath,
           config: routeConfig,
           handler: (request, reply) => { // Here we go
-            request.payload = request.payload && request.payload.toString();
+            // TODO: Temporary fix, confirm if AWS mangles the string or not to utf8
+            if (_.includes(request.headers['content-type'], 'multipart/form-data')) {
+              request.payload = request.payload && request.payload.toString('binary');
+            }
+            else {
+              request.payload = request.payload && request.payload.toString();
+            }
 
             this.printBlankLine();
             this.serverlessLog(`${method} ${request.path} (λ: ${funName})`);
